@@ -9,6 +9,13 @@
 @set _=%CD%
 @set BUILD_TOOL=nmake
 @if "%QT_ROOT%"=="" @set QT_ROOT=%_%/qt
+@set BUILD_TEST=false
+@set BUILD_PACKAGE=false
+@if "%1%"=="test" @set BUILD_TEST=true
+@if "%1%"=="package" @set BUILD_PACKAGE=true
+@if "%2%"=="test" @set BUILD_TEST=true
+@if "%2%"=="package" @set BUILD_PACKAGE=true
+
 
 @if "%1%"=="release" @set BUILD_TYPE=Release
 @if "%1%"=="Release" @set BUILD_TYPE=Release
@@ -30,9 +37,14 @@
 :Build
 	@mkdir build || goto error
 	@pushd build || goto error
-	@cmake -G"NMake Makefiles" -DQT_QMAKE_EXECUTABLE=%QT_ROOT%/bin/qmake.exe ..  || goto error
+	@cmake -DCMAKE_BUILD_TYPE=Release -G"NMake Makefiles" -DQT_QMAKE_EXECUTABLE=%QT_ROOT%/bin/qmake.exe ..  || goto error
 	@nmake || goto error
-	@nmake package || goto error
+	@if %BUILD_TEST% (
+		@nmake test
+	)
+	@if %BUILD_PACKAGE% (
+		@nmake package
+	)
 	@popd
 
 @echo -- Project sucessfully built!
