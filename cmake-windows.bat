@@ -39,10 +39,10 @@
 	@pushd build || goto error
 	@cmake -DCMAKE_BUILD_TYPE=Release -G"NMake Makefiles" -DQT_QMAKE_EXECUTABLE=%QT_ROOT%/bin/qmake.exe ..  || goto error
 	@nmake || goto error
-	@if %BUILD_TEST% (
+	@if "%BUILD_TEST%" == "true" (
 		@nmake test
 	)
-	@if %BUILD_PACKAGE% (
+	@if "%BUILD_PACKAGE%" == "true" (
 		@nmake package
 	)
 	@popd
