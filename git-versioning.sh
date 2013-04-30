@@ -33,7 +33,11 @@ EOF
 
 current_tag()
 {
-    echo $(git describe --tags --always)
+    CURRENT_TAG=$(git describe --tags --always)
+    if [[ ! "$CURRENT_TAG" =~ "-" ]]; then
+        CURRENT_TAG=${CURRENT_TAG}-0-000000
+    fi
+    echo ${CURRENT_TAG}
 }
 
 current_version()
