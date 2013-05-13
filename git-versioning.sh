@@ -52,7 +52,7 @@ current_sha1()
 
 current_branch()
 {
-    echo $(git for-each-ref --format='%(objectname) %(refname:short)' refs | grep `git rev-parse HEAD`) | cut -d' ' -f 2
+    echo $(git for-each-ref --format='%(objectname) %(refname:short)' refs | grep `git rev-parse HEAD` | grep -v HEAD | cut -d' ' -f 2 | cut -d'/' -f 2 | head -n 1)
 }
 
 short_version()
