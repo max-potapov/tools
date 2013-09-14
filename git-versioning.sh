@@ -52,7 +52,20 @@ current_sha1()
 
 current_branch()
 {
-    echo $(git for-each-ref --format='%(objectname) %(refname:short)' refs | grep `git rev-parse HEAD` | grep -v HEAD | cut -d' ' -f 2 | cut -d'/' -f 2 | head -n 1)
+    read -a CURRENT_BRANCHES <<< $(git for-each-ref --format='%(objectname) %(refname:short)' refs \
+                                | grep `git rev-parse HEAD` \
+                                | grep -v HEAD \
+                                | cut -d' ' -f 2 \
+                                | cut -d'/' -f 2)
+    for CURRENT_BRANCH in "${CURRENT_BRANCHES[@]}"
+    do
+        if [[ ${CURRENT_BRANCH} == rc-* ]]; then
+            break
+        else
+            continue
+        fi
+    done
+    echo ${CURRENT_BRANCH}
 }
 
 short_version()
