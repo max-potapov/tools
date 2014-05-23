@@ -3,7 +3,7 @@
 # network link conditioner
 # tested on MacOSX 10.8 & FreeeBSD 9.1
 
-IIF="re1"
+IIF="en0"
 
 UP_BW="0"
 UP_DELAY="0"
