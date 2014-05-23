@@ -23,6 +23,7 @@ usage()
         -l packet loss (%, 0.0-1.0)
         -n profile number
         -i profile list
+        -f flush pipes
 EOF
 }
 
@@ -120,7 +121,7 @@ if [ $# -eq 0 ]; then
     exit
 fi
 
-while getopts "b:d:l:n:ih?" OPTION
+while getopts "b:d:l:n:fih?" OPTION
 do
     case $OPTION in
     b)
@@ -140,6 +141,10 @@ do
         ;;
     i)
         info
+        exit
+        ;;
+    f)
+        flush
         exit
         ;;
     *)
