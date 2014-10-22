@@ -47,7 +47,7 @@ object FindDuplicateStrings {
             (file, diff) <- diffs
         } println(
             s"""===============================================
-               |Found duplicate resources in: ${niceName(file)}
+               |Found strings mismatch in: ${niceName(file)}
                |
                |${diffToString(diff)}
                |===============================================""".stripMargin)
@@ -64,7 +64,7 @@ object FindDuplicateStrings {
     }
 
     def diffToString(diff: (ResourcesDiff, ResourcesDiff)):String = {
-        val diffMap = Map("OBSOLETE" -> diff._1, "NOT LOCALIZED" -> diff._2)
+        val diffMap = Map("NOT LOCALIZED" -> diff._1, "OBSOLETE" -> diff._2)
         val prettyDiffs = for {
             (key, value) <- diffMap
             if value.nonEmpty
