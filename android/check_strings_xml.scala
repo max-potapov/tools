@@ -7,7 +7,7 @@ import scala.language.postfixOps
 
 import scala.xml._
 
-object FindDuplicateStrings {
+object CheckStringsXml {
     def exitWithError(exitCode:Int, errorMessage:String):Unit = {
         println(s"Error($exitCode): $errorMessage")
         sys.exit(exitCode)
