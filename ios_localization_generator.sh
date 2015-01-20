@@ -7,12 +7,13 @@
 # How to use:
 # 1) create a dir;
 # 2) put the script in a created dir;
-# 3) set up PROJECT_FILES_PATH (see below) according to your project location. It should point to the project name dir in the project(ios_wiper_ui/Wiper or /iclient/Unison);
+# 3) set up PROJECT_FILES_PATH (see below) according to your project location. It should point to the Wiper dir in the project;
 # 4) if user wants to see diff at the end of generation, DiffMerge tool should be installed. (https://sourcegear.com/diffmerge/downloads.php)
 
-PROJECT_FILES_PATH=
+PROJECT_FILES_PATH_UI=
+PROJECT_FILES_PATH_CORE=
+LOCALIZATION_FILE_PATH=${PROJECT_FILES_PATH_UI}/Resources/en.lproj/Localizable.strings
 
-LOCALIZATION_FILE_PATH=${PROJECT_FILES_PATH}/Resources/en.lproj/Localizable.strings
 ORIGINAL_STRINGS_FILE_NAME=LocalizableOriginal.strings
 NEW_STRINGS_FILE_NAME=LocalizableNew.strings
 NEW_LOCALIZATION_STRINGS_WITHOUT_APNS_SECTION=Localizable.strings
@@ -27,7 +28,7 @@ copy_original_file()
 
 generate_strings_file()
 {
-	find ${PROJECT_FILES_PATH} -name \*.m | xargs genstrings -o .
+	find ${PROJECT_FILES_PATH_UI} ${PROJECT_FILES_PATH_CORE} -name \*.m -print0 | xargs -0 genstrings -o .
 	rm InfoPlist.strings
 }
 
