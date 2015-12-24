@@ -150,8 +150,8 @@ def serializeTimeline(stacks, dest, title):
             </style>
         </head>
         <body>
-            <link title="timeline-styles" rel="stylesheet" href="http://cdn.knightlab.com/libs/timeline3/latest/css/timeline.css">
-            <script src="http://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
+            <link title="timeline-styles" rel="stylesheet" href="https://cdn.knightlab.com/libs/timeline3/latest/css/timeline.css">
+            <script src="https://cdn.knightlab.com/libs/timeline3/latest/js/timeline.js"></script>
             <div id='timeline-embed' style="width: 100%%; height: 100%%"></div>
             <script type="text/javascript">
                 window.timeline = new TL.Timeline('timeline-embed', JSON.parse('%s'));
