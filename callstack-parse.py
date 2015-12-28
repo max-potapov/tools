@@ -8,66 +8,65 @@ import os
 import json
 import subprocess
 
-#atos -o ~/Library/Developer/Xcode/iOS\ DeviceSupport/9.2\ \(13C75\)/Symbols/System/Library/Frameworks/AVFoundation.framework/AVFoundation -l 0x189070000 0x1890aa09c 0x1890b0254 0x18915a3dc
 
 class BinaryImages:
-    initre = re.compile(r"([0-9/: ]*)  Starting performance tracker on iOS ([a-zA-Z0-9.() ]*)\n")
-    beginre = re.compile(r"([0-9/: ]*)  <BinaryImages>\n")
-    imagere = re.compile(r"([0-9/: ]*)  ([a-zA-Z0-9_./ +-]*)\|(0x[a-z0-9]*)\n")
-    endre = re.compile(r"([0-9/: ]*)  </BinaryImages>\n")
+    init_re = re.compile(r"([0-9/: ]*)  Starting performance tracker on iOS ([a-zA-Z0-9.() ]*)\n")
+    begin_re = re.compile(r"([0-9/: ]*)  <BinaryImages>\n")
+    image_re = re.compile(r"([0-9/: ]*)  ([a-zA-Z0-9_./ +-]*)\|(0x[a-z0-9]*)\n")
+    end_re = re.compile(r"([0-9/: ]*)  </BinaryImages>\n")
 
-    def __init__(self, logstring):
-        self.osversion = None
+    def __init__(self, log_string):
+        self.osVersion = None
         self.images = None
         self.finished = False
 
-        ii = BinaryImages.initre.findall(logstring)
+        ii = BinaryImages.init_re.findall(log_string)
         if ii:
-            self.osversion = ii[0][1]
+            self.osVersion = ii[0][1]
 
-    def parse(self, logstring):
+    def parse(self, log_string):
         if self.finished:
             return False
 
-        if self.images == None:
-            bi = BinaryImages.beginre.findall(logstring)
+        if self.images is None:
+            bi = BinaryImages.begin_re.findall(log_string)
             if bi:
                 self.images = []
-            return bi != None
+            return bi is not None
 
-        ii = BinaryImages.imagere.findall(logstring)
+        ii = BinaryImages.image_re.findall(log_string)
         if ii and ii[0][1] and ii[0][2]:
             self.images.append((ii[0][1], ii[0][2]))
             return True
 
-        ei = BinaryImages.endre.findall(logstring)
+        ei = BinaryImages.end_re.findall(log_string)
         if ei:
             self.finished = True
             return True
 
-        print "Error parsing binary image %s" % logstring
+        print "Error parsing binary image %s" % log_string
+
 
 class DropStack:
-    fullre = re.compile(r"([0-9/: ]*)  Drop frame stack \(slide (0x[a-z0-9]*)\): (([a-zA-Z._]*:0x[a-z0-9]*\|)*)\n")
-    stackre = re.compile(r"(([a-zA-Z._]*):(0x[a-z0-9]*)\|)")
+    full_re = re.compile(r"([0-9/: ]*)  Drop frame stack \(slide (0x[a-z0-9]*)\): (([a-zA-Z._]*:0x[a-z0-9]*\|)*)\n")
+    stack_re = re.compile(r"(([a-zA-Z._]*):(0x[a-z0-9]*)\|)")
 
-    def __init__(self, logstring):
+    def __init__(self, log_string):
         self.timestamp = None
         self.stack = None
 
-        fsi = DropStack.fullre.findall(logstring)
+        fsi = DropStack.full_re.findall(log_string)
         if fsi:
-            si = DropStack.stackre.findall(fsi[0][2])
+            si = DropStack.stack_re.findall(fsi[0][2])
             if si:
                 self.timestamp = datetime.datetime.strptime(fsi[0][0], "%Y/%m/%d %H:%M:%S:%f")
                 self.stack = [(item[1], item[2]) for item in si]
 
-def symbolicate(binaryimages, stacks, dsym):
-    addressesDict = {}
 
-    for imageId, imageTuple in enumerate(binaryimages.images):
+def symbolicate(binary_images, stacks, dsym):
+    for imageId, imageTuple in enumerate(binary_images.images):
         path = imageTuple[0]
-        loadaddress = imageTuple[1]
+        load_address = imageTuple[1]
         head, image = os.path.split(imageTuple[0])
 
         addresses = sets.Set()
@@ -83,10 +82,10 @@ def symbolicate(binaryimages, stacks, dsym):
 
         p = None
         if imageId == 0:
-            p = subprocess.Popen("atos -o %s -l %s" % (dsym, loadaddress), shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+            p = subprocess.Popen("atos -o %s -l %s" % (dsym, load_address), shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
         else:
-            fullpath = "~/Library/Developer/Xcode/iOS DeviceSupport/%s/Symbols%s" % (binaryimages.osversion, path)
-            p = subprocess.Popen("atos -arch arm64 -o \"%s\" -l %s" % (fullpath, loadaddress), shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
+            full_path = "~/Library/Developer/Xcode/iOS DeviceSupport/%s/Symbols%s" % (binary_images.osVersion, path)
+            p = subprocess.Popen("atos -arch arm64 -o \"%s\" -l %s" % (full_path, load_address), shell=True, stdout=subprocess.PIPE, stdin=subprocess.PIPE)
 
         if p:
             for idx, val in enumerate(addresses):
@@ -102,16 +101,17 @@ def symbolicate(binaryimages, stacks, dsym):
                         mapping[val] = lines[idx]
 
         for stack in stacks:
-            updatedStack = [(module, address) if (module != image or not mapping.has_key(address)) else (module, mapping[address]) for (module, address) in stack.stack]
-            stack.stack = updatedStack
+            updated_stack = [(module, address) if (module != image or address not in mapping) else (module, mapping[address]) for (module, address) in stack.stack]
+            stack.stack = updated_stack
 
-def serializeTimeline(stacks, dest, title):
-    timeline = { "title" : {
-                     "text" : { "headline" : title },
+
+def serialize_timeline(stacks, dest, title):
+    timeline = {"title": {
+                     "text": {"headline": title},
                      "media": {
                         "url": "",
-                          "caption": "",
-                          "credit": "" } } }
+                        "caption": "",
+                        "credit": ""}}}
     events = []
     for stack in stacks:
         table = "<table class=stacktrace>"
@@ -120,21 +120,21 @@ def serializeTimeline(stacks, dest, title):
         table += "/<table>"
 
         events.append({
-            "start_date" : {
-                "year" : stack.timestamp.year,
-                "month" : stack.timestamp.month,
-                "day" : stack.timestamp.day,
-                "hour" : stack.timestamp.hour,
-                "minute" : stack.timestamp.minute,
-                "second" : stack.timestamp.second,
-                "millisecond" : stack.timestamp.microsecond / 1000 },
-            "media" : {
-                "url" : "",
-                "caption" : "",
-                "credit": "" },
-            "text" : {
-                "headline" : stack.timestamp.strftime("%H:%M:%S.%f"),
-                "text" : table
+            "start_date": {
+                "year": stack.timestamp.year,
+                "month": stack.timestamp.month,
+                "day": stack.timestamp.day,
+                "hour": stack.timestamp.hour,
+                "minute": stack.timestamp.minute,
+                "second": stack.timestamp.second,
+                "millisecond": stack.timestamp.microsecond / 1000},
+            "media": {
+                "url": "",
+                "caption": "",
+                "credit": ""},
+            "text": {
+                "headline": stack.timestamp.strftime("%H:%M:%S.%f"),
+                "text": table
             }})
     timeline["events"] = events
 
@@ -160,9 +160,10 @@ def serializeTimeline(stacks, dest, title):
     </html>
     """ % (title, json.dumps(timeline))
 
-    result = open(dest,"w")
+    result = open(dest, "w")
     result.write(html_str)
     result.close()
+
 
 def main():
     parser = argparse.ArgumentParser(description='Parse logs and build dropped frame stacks statistics.')
@@ -172,37 +173,38 @@ def main():
 
     args = parser.parse_args()
 
-    currentBinaryImages = None
-    stacksDict = {}
+    current_binary_images = None
+    stacks_dict = {}
 
     with open(args.log) as f:
         for line in f:
-            binaryImages = BinaryImages(line)
-            if binaryImages.osversion:
-                currentBinaryImages = binaryImages
-                stacksDict[currentBinaryImages] = []
+            binary_images = BinaryImages(line)
+            if binary_images.osVersion:
+                current_binary_images = binary_images
+                stacks_dict[current_binary_images] = []
                 continue
 
-            if currentBinaryImages:
-                if currentBinaryImages.parse(line):
+            if current_binary_images:
+                if current_binary_images.parse(line):
                     continue
             else:
                 continue
 
             stack = DropStack(line)
             if stack.stack:
-                stacksDict[currentBinaryImages].append(stack)
+                stacks_dict[current_binary_images].append(stack)
                 continue
 
     stacks = []
 
-    for binaryimages in stacksDict:
-        symbolicate(binaryimages, stacksDict[binaryimages], args.dsym)
-        stacks += stacksDict[binaryimages]
+    for binary_images in stacks_dict:
+        symbolicate(binary_images, stacks_dict[binary_images], args.dsym)
+        stacks += stacks_dict[binary_images]
 
-    if args.timeline :
+    if args.timeline:
         head, tail = os.path.split(args.log)
-        serializeTimeline(stacks, args.timeline, "%s serialization" % tail)
+        serialize_timeline(stacks, args.timeline, "%s serialization" % tail)
+
 
 if __name__ == "__main__":
     main()
