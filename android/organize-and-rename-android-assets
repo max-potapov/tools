@@ -1,0 +1,18 @@
+#!/bin/sh
+cd ~/Desktop/res
+
+for file in $(find . -type f -iname '*-xxxhdpi*'); do
+  mv "$file" "drawable-xxxhdpi/${file/-xxxhdpi/}"
+done
+for file in $(find . -type f -iname '*-xxhdpi*'); do
+  mv "$file" "drawable-xxhdpi/${file/-xxhdpi/}"
+done
+for file in $(find . -type f -iname '*-xhdpi*'); do
+  mv "$file" "drawable-xhdpi/${file/-xhdpi/}"
+done
+for file in $(find . -type f -iname '*-hdpi*'); do
+  mv "$file" "drawable-hdpi/${file/-hdpi/}"
+done
+for file in $(find . -type f -iname '*-mdpi*'); do
+  mv "$file" "drawable-mdpi/${file/-mdpi/}"
+done
